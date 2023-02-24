@@ -1,27 +1,42 @@
 Query_1#
+
 SELECT market
 FROM dim_customer  
 WHERE customer = 'Atliq Exclusive' AND region = 'APAC';
 
 Query_2#
-SUM(CASE 
-		WHEN fiscal_year = 2020 THEN 1 
-        ELSE 0 
-        END) AS unique_products_2020,
-  SUM(CASE 
-		WHEN fiscal_year = 2021 THEN 1 
-        ELSE 0 
-        END) AS unique_products_2021,
-  ROUND((SUM(CASE 
-		WHEN fiscal_year = 2021 THEN 1 
-        ELSE 0 
-        END) / 
-   SUM(CASE 
-		WHEN fiscal_year = 2020 THEN 1 
-        ELSE 0 
-        END) - 1),2) * 100 AS percentage_chg
-FROM 
-  (SELECT DISTINCT product_code, fiscal_year 
-   FROM fact_sales_monthly) As T1;
-   
+
+WITH unique_product_count AS
+(SELECT COUNT(DISTINCT CASE WHEN fiscal_year = 2020 THEN product_code END) AS unique_products_2020,
+	COUNT(DISTINCT CASE WHEN fiscal_year = 2021 THEN product_code END) AS unique_products_2021 
+FROM fact_sales_monthly)
+SELECT unique_products_2020, unique_products_2020,
+CONCAT(ROUND(((unique_products_2021-unique_products_2020)*1.0/unique_products_2020)*100,2),'%') AS percentage_chg
+FROM unique_product_count;
+
 Query_3#
+
+SELECT segment,
+       COUNT(DISTINCT(product_code)) AS product_count
+FROM dim_product
+GROUP BY segment
+ORDER by product_count DESC;
+
+Query_4#
+
+WITH unique_product AS
+(SELECT
+      b.segment AS segment,
+      COUNT(DISTINCT
+          (CASE 
+              WHEN fiscal_year = 2020 THEN a.product_code END)) AS product_count_2020,
+       COUNT(DISTINCT
+          (CASE 
+              WHEN fiscal_year = 2021 THEN a.product_code END)) AS product_count_2021        
+ FROM fact_sales_monthly AS a
+ INNER JOIN dim_product AS b
+ ON a.product_code = b.product_code
+ GROUP BY b.segment)
+SELECT segment, product_count_2020, product_count_2021, (product_count_2021-product_count_2020) AS difference
+FROM unique_product
+ORDER BY difference DESC;
