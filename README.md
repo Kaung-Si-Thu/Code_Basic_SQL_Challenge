@@ -1,4 +1,4 @@
-# Code_Basic_SQL_Challenge
+# Consumer Goods Ad_Hoc Insights
 
 https://codebasics.io/challenge/codebasics-resume-project-challenge
 
